@@ -102,6 +102,7 @@ public class AsyncTaskResult<T> {
 
                 // 処理がタイムアウトした
                 if (!isTaskFinished()) {
+                    cancel(); // タイムアウトしたら強制キャンセルさせる
                     throw new TaskTimeoutException();
                 }
             }

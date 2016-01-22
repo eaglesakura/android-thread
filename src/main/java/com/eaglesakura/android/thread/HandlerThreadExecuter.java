@@ -1,11 +1,11 @@
 package com.eaglesakura.android.thread;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.eaglesakura.android.thread.ui.UIHandler;
 
 import android.os.Handler;
 
-import com.eaglesakura.android.thread.ui.UIHandler;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HandlerThreadExecuter {
 
@@ -24,8 +24,6 @@ public class HandlerThreadExecuter {
 
     /**
      * 実行スレッドを指定する
-     *
-     * @param handler
      */
     public void setHandler(Handler handler) {
         this.handler = handler;

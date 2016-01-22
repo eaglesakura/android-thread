@@ -48,8 +48,6 @@ public class AsyncTaskResult<T> {
     /**
      * キャンセルされていればtrue
      * cancel()されているか、CancelSignal.isCancelがtrueの場合キャンセルとなる
-     *
-     * @return
      */
     public boolean isCanceled() {
         if (cancelSignal != null && cancelSignal.isCanceled()) {
@@ -60,8 +58,6 @@ public class AsyncTaskResult<T> {
 
     /**
      * キャンセルチェック用のコールバックを指定する
-     *
-     * @param cancelSignal
      */
     public void setCancelSignal(CancelSignal cancelSignal) {
         this.cancelSignal = cancelSignal;
@@ -69,8 +65,6 @@ public class AsyncTaskResult<T> {
 
     /**
      * リスナを設定する
-     *
-     * @param listener
      */
     public AsyncTaskResult<T> setListener(Listener<T> listener) {
         synchronized (resultLock) {
@@ -86,10 +80,6 @@ public class AsyncTaskResult<T> {
 
     /**
      * タスクの実行待ちを行う
-     *
-     * @param timeoutMs
-     * @return
-     * @throws Exception
      */
     public T await(long timeoutMs) throws TaskException {
         synchronized (awaitLock) {
@@ -114,8 +104,6 @@ public class AsyncTaskResult<T> {
 
     /**
      * タスクが成功、もしくは失敗・キャンセルしていたらtrue
-     *
-     * @return
      */
     public boolean isTaskFinished() {
         return result != null || error != null || isCanceled();
@@ -123,8 +111,6 @@ public class AsyncTaskResult<T> {
 
     /**
      * タスクを実行しているコントローラを取得する
-     *
-     * @return
      */
     public AsyncTaskController getController() {
         return controller;
@@ -187,8 +173,6 @@ public class AsyncTaskResult<T> {
 
     /**
      * エラーが発生していたら例外を投げ、それ以外は何もしない
-     *
-     * @throws Exception
      */
     void throwIfError() throws TaskException {
         if (error == null) {
@@ -205,16 +189,12 @@ public class AsyncTaskResult<T> {
     public interface CancelSignal {
         /**
          * キャンセルする場合はtrueを返す
-         *
-         * @return
          */
         boolean isCanceled();
     }
 
     /**
      * シンプルなリスナ
-     *
-     * @param <T>
      */
     public interface Listener<T> {
         /**
@@ -225,23 +205,16 @@ public class AsyncTaskResult<T> {
 
         /**
          * タスクがキャンセルされた場合に呼び出される
-         *
-         * @param task
          */
         void onTaskCanceled(AsyncTaskResult<T> task);
 
         /**
          * タスクが失敗した場合に呼び出される
-         *
-         * @param task
-         * @param error
          */
         void onTaskFailed(AsyncTaskResult<T> task, Exception error);
 
         /**
          * タスクの完了時に必ず呼び出される
-         *
-         * @param task
          */
         void onTaskFinalize(AsyncTaskResult<T> task);
     }

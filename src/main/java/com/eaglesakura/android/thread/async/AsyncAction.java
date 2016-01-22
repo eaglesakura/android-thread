@@ -1,14 +1,13 @@
 package com.eaglesakura.android.thread.async;
 
-import android.os.Handler;
-
 import com.eaglesakura.android.thread.ui.UIHandler;
+
+import android.os.Handler;
 
 /**
  * 非同期の処理を行う。<BR>
  * こちらはAsyncTaskとは独立しているため、強制的な実行が可能。<BR>
  * Handlerの指定も可能。
- *
  */
 public abstract class AsyncAction extends Thread {
     Handler handler;
@@ -16,7 +15,6 @@ public abstract class AsyncAction extends Thread {
     boolean canceled = false;
 
     /**
-     *
      * @param handler 通知先のハンドラ
      */
     public AsyncAction(Handler handler) {
@@ -52,13 +50,11 @@ public abstract class AsyncAction extends Thread {
 
     /**
      * 実行に成功した場合に呼び出される。
-     * @param object
      */
     protected abstract void onSuccess(Object object);
 
     /**
      * 実行に失敗したため、エラーハンドルを行わせる。
-     * @param exception
      */
     protected abstract void onFailure(Exception exception);
 
@@ -71,7 +67,6 @@ public abstract class AsyncAction extends Thread {
 
     /**
      * キャンセル済みだったらtrue
-     * @return
      */
     public boolean isCanceled() {
         return canceled;

@@ -43,8 +43,6 @@ abstract class SimpleLoopController {
 
     /**
      * フレームレートの設定
-     *
-     * @param frameRate
      */
     public void setFrameRate(double frameRate) {
         this.frameRate = frameRate;
@@ -103,8 +101,6 @@ abstract class SimpleLoopController {
 
     /**
      * 前のフレームからのデルタ時間を取得する
-     *
-     * @return
      */
     public double getDeltaTime() {
         return deltaTime;

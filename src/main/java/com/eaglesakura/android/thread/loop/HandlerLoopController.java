@@ -1,10 +1,10 @@
 package com.eaglesakura.android.thread.loop;
 
-import android.os.Handler;
-
 import com.eaglesakura.android.thread.async.AsyncHandler;
 import com.eaglesakura.android.thread.ui.UIHandler;
 import com.eaglesakura.util.Timer;
+
+import android.os.Handler;
 
 /**
  * 指定のハンドラでループ処理を行うUtilクラス
@@ -47,8 +47,6 @@ public abstract class HandlerLoopController {
 
     /**
      * フレームレートの設定
-     *
-     * @param frameRate
      */
     public void setFrameRate(double frameRate) {
         this.frameRate = frameRate;
@@ -93,8 +91,6 @@ public abstract class HandlerLoopController {
 
     /**
      * 前のフレームからのデルタ時間を取得する
-     *
-     * @return
      */
     public double getDeltaTime() {
         return deltaTime;
@@ -102,8 +98,6 @@ public abstract class HandlerLoopController {
 
     /**
      * 使用しているハンドラを取得する
-     *
-     * @return
      */
     public Handler getHandler() {
         return handler;

@@ -12,8 +12,6 @@ public class TaskFailedException extends TaskException {
 
     /**
      * タスクで発生した例外を取得する
-     *
-     * @return
      */
     public Exception getTaskError() {
         return error;

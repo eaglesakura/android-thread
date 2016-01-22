@@ -47,8 +47,6 @@ public class AsyncTaskController {
      * スレッド数を指定してコントローラを生成する
      * <p/>
      * 標準では15秒のスレッドキープを行う
-     *
-     * @param threads
      */
     public AsyncTaskController(int threads) {
         this(threads, 1000 * 15);
@@ -56,9 +54,6 @@ public class AsyncTaskController {
 
     /**
      * スレッド数とキープ時間を指定してコントローラを生成する
-     *
-     * @param threads
-     * @param keepAliveTimeMs
      */
     public AsyncTaskController(int threads, long keepAliveTimeMs) {
         this.KEEPALIVE_TIME_MS = keepAliveTimeMs;
@@ -67,8 +62,6 @@ public class AsyncTaskController {
 
     /**
      * ハンドリングクラスを指定する
-     *
-     * @param taskHandler
      */
     public void setTaskHandler(ITaskHandler taskHandler) {
         this.taskHandler = taskHandler;
@@ -76,8 +69,6 @@ public class AsyncTaskController {
 
     /**
      * 現在の実行待ちキューを取得する
-     *
-     * @return
      */
     public List<AsyncTaskResult<?>> getTaskQueue() {
         return new ArrayList<>(taskQueue);
@@ -85,8 +76,6 @@ public class AsyncTaskController {
 
     /**
      * 現在実行中のタスクを取得する
-     *
-     * @return
      */
     public List<AsyncTaskResult<?>> getRunningTasks() {
         return new ArrayList<>(runningTasks);
@@ -112,10 +101,6 @@ public class AsyncTaskController {
 
     /**
      * タスクを末尾に追加する
-     *
-     * @param task
-     * @param <T>
-     * @return
      */
     public <T> AsyncTaskResult<T> pushBack(IAsyncTask<T> task) {
         return pushTask(false, task);
@@ -137,10 +122,6 @@ public class AsyncTaskController {
 
     /**
      * タスクを先頭に追加する
-     *
-     * @param task
-     * @param <T>
-     * @return
      */
     public <T> AsyncTaskResult<T> pushFront(IAsyncTask<T> task) {
         return pushTask(true, task);
@@ -148,9 +129,6 @@ public class AsyncTaskController {
 
     /**
      * タスクを末尾に追加する
-     *
-     * @param task
-     * @return
      */
     public AsyncTaskResult<AsyncTaskController> pushFront(final Runnable task) {
         return pushFront(new IAsyncTask<AsyncTaskController>() {

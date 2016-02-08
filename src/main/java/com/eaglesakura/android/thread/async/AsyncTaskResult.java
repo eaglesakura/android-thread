@@ -7,72 +7,120 @@ import com.eaglesakura.android.thread.async.error.TaskTimeoutException;
 import com.eaglesakura.util.LogUtil;
 
 public class AsyncTaskResult<T> {
-    private final AsyncTaskController controller;
+    private final AsyncTaskController mController;
 
     AsyncTaskResult(AsyncTaskController pipeline) {
-        this.controller = pipeline;
+        this.mController = pipeline;
     }
 
     /**
      * 実行対象のタスク
      */
-    IAsyncTask<T> task;
+    IAsyncTask<T> mTask;
 
-    T result;
+    T mResult;
 
-    Exception error;
+    Exception mError;
 
     /**
      * リスナ
      */
-    Listener<T> listener;
+    TaskListener<T> mListener;
 
     /**
      * キャンセル状態であればtrue
      */
-    private boolean canceled;
+    private boolean mCanceledTask;
 
-    private CancelSignal cancelSignal;
+    /**
+     * リスナがキャンセル状態であればtrue
+     */
+    private boolean mCanceledListener;
 
-    private final Object awaitLock = new Object();
+    private CancelSignal mCancelSignal;
 
-    private final Object resultLock = new Object();
+    private final Object mAwaitLock = new Object();
+
+    private final Object mResultlock = new Object();
 
     /**
      * 実行をキャンセルする
      */
     public void cancel() {
-        this.canceled = true;
+        this.mCanceledTask = true;
     }
 
     /**
-     * キャンセルされていればtrue
+     * リスナの実行をキャンセルする
+     */
+    public void cancelListener() {
+        mCanceledListener = true;
+    }
+
+    /**
+     * タスク実行がキャンセルされていればtrue
      * cancel()されているか、CancelSignal.isCancelがtrueの場合キャンセルとなる
      */
-    public boolean isCanceled() {
-        if (cancelSignal != null && cancelSignal.isCanceled()) {
+    public boolean isCanceledTask() {
+        if (mCancelSignal != null && mCancelSignal.isCanceled()) {
             return true;
         }
-        return canceled;
+        return mCanceledTask;
+    }
+
+    /**
+     * リスな呼び出しがキャンセルされていればtrue
+     */
+    public boolean isCanceledListener() {
+        return mCanceledListener || mController.isCancelListeners();
     }
 
     /**
      * キャンセルチェック用のコールバックを指定する
      */
     public void setCancelSignal(CancelSignal cancelSignal) {
-        this.cancelSignal = cancelSignal;
+        this.mCancelSignal = cancelSignal;
     }
 
     /**
      * リスナを設定する
+     * 排他仕様のため、1インスタンスだけが有効となる。
      */
     public AsyncTaskResult<T> setListener(Listener<T> listener) {
-        synchronized (resultLock) {
+        return setListener((TaskListener<T>) listener);
+    }
+
+    /**
+     * リスナを設定する
+     * 排他仕様のため、1インスタンスだけが有効となる。
+     */
+    public AsyncTaskResult<T> setListener(CompletedListener<T> listener) {
+        return setListener((TaskListener<T>) listener);
+    }
+
+    /**
+     * リスナを設定する
+     * 排他仕様のため、1インスタンスだけが有効となる。
+     */
+    public AsyncTaskResult<T> setListener(FailedListener<T> listener) {
+        return setListener((TaskListener<T>) listener);
+    }
+
+    /**
+     * リスナを設定する
+     * 排他仕様のため、1インスタンスだけが有効となる。
+     */
+    public AsyncTaskResult<T> setListener(FinalizeListener<T> listener) {
+        return setListener((TaskListener<T>) listener);
+    }
+
+    private AsyncTaskResult<T> setListener(TaskListener<T> listener) {
+        synchronized (mResultlock) {
             // 既にタスクが完了してしまっている場合はリスナをコールさせてローカルに残さない
             if (isTaskFinished()) {
                 handleListener(listener);
             } else {
-                this.listener = listener;
+                this.mListener = listener;
             }
         }
         return this;
@@ -82,10 +130,10 @@ public class AsyncTaskResult<T> {
      * タスクの実行待ちを行う
      */
     public T await(long timeoutMs) throws TaskException {
-        synchronized (awaitLock) {
+        synchronized (mAwaitLock) {
             if (!isTaskFinished()) {
                 try {
-                    awaitLock.wait(timeoutMs);
+                    mAwaitLock.wait(timeoutMs);
                 } catch (Exception e) {
                     LogUtil.log(e);
                 }
@@ -99,21 +147,21 @@ public class AsyncTaskResult<T> {
         }
 
         throwIfError();
-        return result;
+        return mResult;
     }
 
     /**
      * タスクが成功、もしくは失敗・キャンセルしていたらtrue
      */
     public boolean isTaskFinished() {
-        return result != null || error != null || isCanceled();
+        return mResult != null || mError != null || isCanceledTask();
     }
 
     /**
      * タスクを実行しているコントローラを取得する
      */
     public AsyncTaskController getController() {
-        return controller;
+        return mController;
     }
 
     /**
@@ -124,48 +172,61 @@ public class AsyncTaskResult<T> {
         Exception error = null;
 
         try {
-            if (isCanceled()) {
+            if (isCanceledTask()) {
                 // 既にキャンセルされている
                 throw new TaskCanceledException();
             }
 
-            result = task.doInBackground(this);
+            result = mTask.doInBackground(this);
         } catch (Exception e) {
             error = e;
         }
 
-        synchronized (resultLock) {
-            this.result = result;
-            this.error = error;
-            handleListener(this.listener);
-            this.listener = null;
+        synchronized (mResultlock) {
+            this.mResult = result;
+            this.mError = error;
+            handleListener(this.mListener);
+            this.mListener = null;
         }
 
-        synchronized (awaitLock) {
-            awaitLock.notifyAll();
+        synchronized (mAwaitLock) {
+            mAwaitLock.notifyAll();
         }
     }
 
     /**
      * リスナのハンドリングを行う
      */
-    void handleListener(final Listener<T> callListener) {
+    void handleListener(final TaskListener<T> callListener) {
         if (callListener == null) {
             return;
         }
-        controller.taskHandler.request(new Runnable() {
+        mController.mTaskHandler.request(new Runnable() {
             @Override
             public void run() {
-                if (callListener != null) {
-                    if (isCanceled()) {
-                        callListener.onTaskCanceled(AsyncTaskResult.this);
-                    } else if (result != null) {
-                        callListener.onTaskCompleted(AsyncTaskResult.this, result);
+                // リスナが存在し、リスナーな呼び出しが許可されていれば呼び出す
+                if (callListener != null && !isCanceledListener()) {
+                    if (isCanceledTask()) {
+                        // キャンセルされている
+                        if (callListener instanceof FailedListener) {
+                            ((FailedListener) callListener).onTaskCanceled(AsyncTaskResult.this);
+                        }
+                    } else if (mResult != null) {
+                        // 成功した
+                        if (callListener instanceof CompletedListener) {
+                            ((CompletedListener) callListener).onTaskCompleted(AsyncTaskResult.this, mResult);
+                        }
                     } else {
-                        callListener.onTaskFailed(AsyncTaskResult.this, error);
+                        // 失敗した
+                        if (callListener instanceof FailedListener) {
+                            ((FailedListener) callListener).onTaskFailed(AsyncTaskResult.this, mError);
+                        }
                     }
 
-                    callListener.onTaskFinalize(AsyncTaskResult.this);
+                    // 最後に呼び出す
+                    if (callListener instanceof FinalizeListener) {
+                        ((FinalizeListener) callListener).onTaskFinalize(AsyncTaskResult.this);
+                    }
                 }
             }
         });
@@ -175,10 +236,26 @@ public class AsyncTaskResult<T> {
      * エラーが発生していたら例外を投げ、それ以外は何もしない
      */
     void throwIfError() throws TaskException {
-        if (error == null) {
+        if (mError == null) {
             return;
         }
-        throw new TaskFailedException(error);
+        throw new TaskFailedException(mError);
+    }
+
+    /**
+     * タスクの戻り値を取得する。
+     * タスク実行中や失敗時はnullである場合があるため注意する。
+     */
+    public T getResult() {
+        return mResult;
+    }
+
+    /**
+     * タスクの失敗値を取得する。
+     * タスク成功時等はnullである。
+     */
+    public Exception getError() {
+        return mError;
     }
 
     /**
@@ -193,16 +270,18 @@ public class AsyncTaskResult<T> {
         boolean isCanceled();
     }
 
-    /**
-     * シンプルなリスナ
-     */
-    public interface Listener<T> {
+    public interface TaskListener<T> {
+    }
+
+    public interface CompletedListener<T> extends TaskListener<T> {
         /**
          * @param task
          * @param result
          */
         void onTaskCompleted(AsyncTaskResult<T> task, T result);
+    }
 
+    public interface FailedListener<T> extends TaskListener<T> {
         /**
          * タスクがキャンセルされた場合に呼び出される
          */
@@ -212,10 +291,19 @@ public class AsyncTaskResult<T> {
          * タスクが失敗した場合に呼び出される
          */
         void onTaskFailed(AsyncTaskResult<T> task, Exception error);
+    }
+
+    public interface FinalizeListener<T> extends TaskListener<T> {
 
         /**
          * タスクの完了時に必ず呼び出される
          */
         void onTaskFinalize(AsyncTaskResult<T> task);
+    }
+
+    /**
+     * 全ての受け取りを行うリスナ
+     */
+    public interface Listener<T> extends CompletedListener<T>, FailedListener<T>, FinalizeListener<T> {
     }
 }

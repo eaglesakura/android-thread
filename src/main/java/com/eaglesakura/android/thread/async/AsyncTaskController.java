@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AsyncTaskController {
     final long KEEPALIVE_TIME_MS;
@@ -17,21 +18,34 @@ public class AsyncTaskController {
      * 並列実行されるタスクキュー
      * 並列度合いはスレッド数に依存する
      */
-    final ThreadPoolExecutor threads;
+    final ThreadPoolExecutor mThreads;
+
+    /**
+     * スレッドの参照数
+     */
+    final AtomicInteger mThreadRefs;
 
     /**
      * 実行待ちのキュー
      */
-    final List<AsyncTaskResult<?>> taskQueue = Collections.synchronizedList(new LinkedList<AsyncTaskResult<?>>());
+    final List<AsyncTaskResult<?>> mTaskQueue = Collections.synchronizedList(new LinkedList<AsyncTaskResult<?>>());
 
     /**
      * 実行中
      */
-    final List<AsyncTaskResult<?>> runningTasks = Collections.synchronizedList(new LinkedList<AsyncTaskResult<?>>());
+    final List<AsyncTaskResult<?>> mRunningTasks = Collections.synchronizedList(new LinkedList<AsyncTaskResult<?>>());
 
-    boolean disposed;
+    /**
+     * コントローラを解放済みであればtrue
+     */
+    boolean mDisposed;
 
-    ITaskHandler taskHandler = new ITaskHandler() {
+    /**
+     * 全てのリスナをキャンセルする
+     */
+    boolean mCancelListeners = false;
+
+    ITaskHandler mTaskHandler = new ITaskHandler() {
         @Override
         public void request(final Runnable runner) {
             UIHandler.postUIorRun(new Runnable() {
@@ -57,44 +71,71 @@ public class AsyncTaskController {
      */
     public AsyncTaskController(int threads, long keepAliveTimeMs) {
         this.KEEPALIVE_TIME_MS = keepAliveTimeMs;
-        this.threads = new ThreadPoolExecutor(1, threads, KEEPALIVE_TIME_MS, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        this.mThreads = new ThreadPoolExecutor(1, threads, KEEPALIVE_TIME_MS, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        mThreadRefs = new AtomicInteger(1);
+    }
+
+    /**
+     * スレッドを共有してコントローラを生成する
+     *
+     * @param sharedThreads 共有対象のコントローラ
+     */
+    public AsyncTaskController(AsyncTaskController sharedThreads) {
+        KEEPALIVE_TIME_MS = sharedThreads.KEEPALIVE_TIME_MS;
+        mThreads = sharedThreads.mThreads;
+        mThreadRefs = sharedThreads.mThreadRefs;
+        mThreadRefs.incrementAndGet();
     }
 
     /**
      * ハンドリングクラスを指定する
      */
     public void setTaskHandler(ITaskHandler taskHandler) {
-        this.taskHandler = taskHandler;
+        this.mTaskHandler = taskHandler;
+    }
+
+    /**
+     * リスな呼び出しがキャンセルされていたらtrue
+     */
+    public boolean isCancelListeners() {
+        return mCancelListeners;
+    }
+
+    /**
+     * リスナの呼び出しをキャンセルする
+     */
+    public void cancelListeners() {
+        mCancelListeners = true;
     }
 
     /**
      * 現在の実行待ちキューを取得する
      */
     public List<AsyncTaskResult<?>> getTaskQueue() {
-        return new ArrayList<>(taskQueue);
+        return new ArrayList<>(mTaskQueue);
     }
 
     /**
      * 現在実行中のタスクを取得する
      */
     public List<AsyncTaskResult<?>> getRunningTasks() {
-        return new ArrayList<>(runningTasks);
+        return new ArrayList<>(mRunningTasks);
     }
 
     private synchronized <T> AsyncTaskResult<T> pushTask(boolean front, IAsyncTask<T> task) {
         AsyncTaskResult<T> result = new AsyncTaskResult<>(this);
-        result.task = task;
+        result.mTask = task;
 
         // タスクを追加する
-        if (!disposed) {
+        if (!mDisposed) {
 
             if (front) {
-                taskQueue.add(0, result);
+                mTaskQueue.add(0, result);
             } else {
-                taskQueue.add(result);
+                mTaskQueue.add(result);
             }
 
-            threads.execute(runner);
+            mThreads.execute(runner);
         }
         return result;
     }
@@ -144,25 +185,29 @@ public class AsyncTaskController {
      * すべての未実行タスクをして資源を解放する
      */
     public void dispose() {
-        disposed = true;
-        taskQueue.clear();
-        threads.shutdown();
+        mDisposed = true;
+        mTaskQueue.clear();
+
+        // スレッドの参照がなくなったらシャットダウンする
+        if (mThreadRefs.decrementAndGet() == 0) {
+            mThreads.shutdown();
+        }
     }
 
     /**
      * タスクを実行する
      */
     private void executeTask() {
-        if (taskQueue.isEmpty()) {
+        if (mTaskQueue.isEmpty()) {
             return;
         }
 
-        AsyncTaskResult<?> taskResult = taskQueue.remove(0);
-        runningTasks.add(taskResult);   // 実行中に登録
+        AsyncTaskResult<?> taskResult = mTaskQueue.remove(0);
+        mRunningTasks.add(taskResult);   // 実行中に登録
         {
             taskResult.execute();
         }
-        runningTasks.remove(taskResult);    // 実行中から削除
+        mRunningTasks.remove(taskResult);    // 実行中から削除
     }
 
     final Runnable runner = new Runnable() {

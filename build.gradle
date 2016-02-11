@@ -48,8 +48,8 @@ dependencies {
         compile project(':eglibrary:simple-logger')
         compile project(':eglibrary:simple-utils')
     } else {
-        compile 'com.eaglesakura:simple-logger:1.0.+'
-        compile 'com.eaglesakura:simple-utils:1.0.+'
+        compile 'com.eaglesakura:simple-logger:1.+'
+        compile 'com.eaglesakura:simple-utils:1.+'
     }
 }
 

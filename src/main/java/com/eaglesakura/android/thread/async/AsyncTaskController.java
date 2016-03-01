@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,13 @@ public class AsyncTaskController {
         mThreads = sharedThreads.mThreads;
         mThreadRefs = sharedThreads.mThreadRefs;
         mThreadRefs.incrementAndGet();
+    }
+
+    /**
+     * スレッド操作へのアクセサ
+     */
+    public Executor getExecutor() {
+        return mThreads;
     }
 
     /**

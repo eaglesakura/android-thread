@@ -41,7 +41,7 @@ public class AsyncTaskResult<T> {
 
     private final Object mAwaitLock = new Object();
 
-    private final Object mResultlock = new Object();
+    private final Object mResultLock = new Object();
 
     /**
      * 実行をキャンセルする
@@ -115,7 +115,7 @@ public class AsyncTaskResult<T> {
     }
 
     private AsyncTaskResult<T> setListener(TaskListener<T> listener) {
-        synchronized (mResultlock) {
+        synchronized (mResultLock) {
             // 既にタスクが完了してしまっている場合はリスナをコールさせてローカルに残さない
             if (isTaskFinished()) {
                 handleListener(listener);
@@ -182,7 +182,7 @@ public class AsyncTaskResult<T> {
             error = e;
         }
 
-        synchronized (mResultlock) {
+        synchronized (mResultLock) {
             this.mResult = result;
             this.mError = error;
             handleListener(this.mListener);

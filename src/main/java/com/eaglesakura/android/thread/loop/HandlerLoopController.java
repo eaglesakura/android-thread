@@ -10,38 +10,41 @@ import android.os.Handler;
  * 指定のハンドラでループ処理を行うUtilクラス
  */
 public abstract class HandlerLoopController {
-    final private Handler handler;
+    final private Handler mHandler;
 
     /**
      * フレームレート
      * 1未満の場合は2秒に１回等の処理を行うが、正確性は問わない
      */
-    double frameRate = 60;
+    private double mFrameRate = 60;
 
-    boolean looping = false;
+    /**
+     * ループが継続されていればtrue
+     */
+    private boolean mLooping = false;
 
     /**
      * 解放済みの場合はtrue
      */
-    boolean disposed = false;
+    private boolean mDisposed = false;
 
     final protected Object lock = new Object();
 
     /**
      * ループ時間管理用タイマー
      */
-    Timer timer = new Timer();
+    private Timer mTimer = new Timer();
 
     /**
      * 前のフレームからの経過時間
      */
-    double deltaTime = 1.0;
+    private double mDeltaTime = 1.0;
 
     public HandlerLoopController(Handler handler) {
         if (handler != null) {
-            this.handler = handler;
+            this.mHandler = handler;
         } else {
-            this.handler = AsyncHandler.createInstance("HandlerLoopController");
+            this.mHandler = AsyncHandler.createInstance("HandlerLoopController");
         }
     }
 
@@ -49,36 +52,36 @@ public abstract class HandlerLoopController {
      * フレームレートの設定
      */
     public void setFrameRate(double frameRate) {
-        this.frameRate = frameRate;
+        this.mFrameRate = frameRate;
     }
 
     public double getFrameRate() {
-        return frameRate;
+        return mFrameRate;
     }
 
     /**
      * 処理を開始する
      */
     public void connect() {
-        looping = true;
-        handler.removeCallbacks(loopRunner);
-        handler.post(loopRunner);
+        mLooping = true;
+        mHandler.removeCallbacks(loopRunner);
+        mHandler.post(loopRunner);
     }
 
     /**
      * 処理を終了する
      */
     public void disconnect() {
-        looping = false;
-        handler.removeCallbacks(loopRunner);
+        mLooping = false;
+        mHandler.removeCallbacks(loopRunner);
     }
 
     /**
      * 開放処理を行う
      */
     public void dispose() {
-        if (handler != UIHandler.getInstance()) {
-            handler.getLooper().quit();
+        if (mHandler != UIHandler.getInstance()) {
+            mHandler.getLooper().quit();
         }
     }
 
@@ -86,21 +89,21 @@ public abstract class HandlerLoopController {
      * このハンドラに処理を行わせる
      */
     public void post(Runnable runnable) {
-        handler.post(runnable);
+        mHandler.post(runnable);
     }
 
     /**
      * 前のフレームからのデルタ時間を取得する
      */
     public double getDeltaTime() {
-        return deltaTime;
+        return mDeltaTime;
     }
 
     /**
      * 使用しているハンドラを取得する
      */
     public Handler getHandler() {
-        return handler;
+        return mHandler;
     }
 
     /**
@@ -112,21 +115,21 @@ public abstract class HandlerLoopController {
     private Runnable loopRunner = new Runnable() {
         @Override
         public void run() {
-            final long FRAME_TIME = (long) (1000.0 / frameRate); // 1フレームの許容時間
+            final long FRAME_TIME = (long) (1000.0 / mFrameRate); // 1フレームの許容時間
             // デルタ時間を計算
-            long deltaMs = timer.end();
+            long deltaMs = mTimer.end();
             if (deltaMs > 0) {
-                deltaTime = (double) deltaMs / 1000.0f;
+                mDeltaTime = (double) deltaMs / 1000.0f;
             } else {
-                deltaTime = (double) FRAME_TIME / 1000.0f;
+                mDeltaTime = (double) FRAME_TIME / 1000.0f;
             }
-            timer.start();
+            mTimer.start();
             // 更新を行わせる
             onUpdate();
 
-            final long UPDATE_TIME = timer.end();
-            if (looping) {
-                handler.postDelayed(this, Math.max(1, FRAME_TIME - UPDATE_TIME));   // 1フレームにかけた時間を差し引いてpostする
+            final long UPDATE_TIME = mTimer.end();
+            if (mLooping) {
+                mHandler.postDelayed(this, Math.max(1, FRAME_TIME - UPDATE_TIME));   // 1フレームにかけた時間を差し引いてpostする
             }
         }
     };

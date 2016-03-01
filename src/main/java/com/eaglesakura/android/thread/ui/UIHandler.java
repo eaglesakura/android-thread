@@ -8,8 +8,6 @@ import android.os.Looper;
 
 /**
  * UIスレッド専用のハンドラ
- *
- * @author TAKESHI YAMASHITA
  */
 public class UIHandler extends Handler {
 

@@ -4,7 +4,7 @@
  * 1.0.2   : コントローラのスレッド共有機能を追加
  * 1.0.x   : Circle CIに移行
  */
-def ARTIFACT_VERSION = "1.0"
+def ARTIFACT_VERSION = "1.1"
 def ARTIFACT_NAME = file(".").absoluteFile.name
 def ARTIFACT_INSTALL_TARGET = getArtifactInstallTarget()
 

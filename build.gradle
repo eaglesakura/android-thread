@@ -3,6 +3,7 @@
  * 1.0.1   : 非同期タスクのawaitでタイムアウトになった場合、強制的にキャンセル扱いとなるように修正
  * 1.0.2   : コントローラのスレッド共有機能を追加
  * 1.0.x   : Circle CIに移行
+ * 1.1.x   : RxAndroidを前提に構成変更
  */
 def ARTIFACT_VERSION = "1.1"
 def ARTIFACT_NAME = file(".").absoluteFile.name
@@ -25,9 +26,6 @@ repositories {
 
 apply plugin: 'com.android.library'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
@@ -47,9 +45,11 @@ dependencies {
     if (EGLIBRARY_COMPILE_LOCAL) {
         compile project(':eglibrary:simple-logger')
         compile project(':eglibrary:simple-utils')
+        compile project(':eglibrary:rxandroid-support')
     } else {
         compile 'com.eaglesakura:simple-logger:1.+'
         compile 'com.eaglesakura:simple-utils:1.+'
+        compile 'com.eaglesakura:rxandroid-support:1.+'
     }
 }
 

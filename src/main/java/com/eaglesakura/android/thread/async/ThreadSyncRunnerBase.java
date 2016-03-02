@@ -9,9 +9,11 @@ import android.os.Handler;
  * 何らかの事情で別スレッドで特定処理を行わせる必要がある場合に利用するヘルパ。
  * UIスレッド実行まで待つ、GLスレッド実行まで待つ等の用途に利用
  */
-public abstract class ThreadSyncRunnerBase<T> {
+@Deprecated
+abstract class ThreadSyncRunnerBase<T> {
 
     Handler handler;
+
     /**
      * 戻り値を一時的に格納する
      */

@@ -7,9 +7,12 @@ import android.os.Handler;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * タスクをキャッシュし、指定したハンドラで一括実行する
+ */
 public class HandlerThreadExecuter {
 
-    List<Runnable> runners = new ArrayList<Runnable>();
+    List<Runnable> runners = new ArrayList<>();
 
     Handler handler = UIHandler.getInstance();
 

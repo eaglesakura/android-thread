@@ -51,18 +51,5 @@ public class AsyncHandler extends Handler {
         HandlerThread thread = new HandlerThread(name);
         thread.start();
         return new AsyncHandler(thread);
-
-//        final Holder<AsyncHandler> holder = new Holder<AsyncHandler>();
-//        Thread thread = new Thread() {
-//            @Override
-//            public void run() {
-//                Looper.prepare();
-//                holder.set(new AsyncHandler());
-//                Looper.loop();
-//            }
-//        };
-//        thread.setName(name);
-//        thread.start();
-//        return holder.getWithWait();
     }
 }

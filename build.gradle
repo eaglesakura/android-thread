@@ -30,6 +30,11 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 23
@@ -45,11 +50,11 @@ dependencies {
     if (EGLIBRARY_COMPILE_LOCAL) {
         compile project(':eglibrary:simple-logger')
         compile project(':eglibrary:simple-utils')
-        compile project(':eglibrary:rxandroid-support')
+        compile project(':eglibrary:android-simple-utils')
     } else {
         compile 'com.eaglesakura:simple-logger:1.+'
         compile 'com.eaglesakura:simple-utils:1.+'
-        compile 'com.eaglesakura:rxandroid-support:1.+'
+        compile 'com.eaglesakura:android-simple-utils:1.+'
     }
 }
 
@@ -79,6 +84,7 @@ android.libraryVariants.all { variant ->
         exclude '**/DaoSession.java' /* ignore greenDAO */
         exclude '**/R.java' /* ignore greenDAO */
 
+        options.addStringOption('Xdoclint:none', '-quiet')
         options.encoding = "UTF-8"
         project.configure(options) {
             memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED

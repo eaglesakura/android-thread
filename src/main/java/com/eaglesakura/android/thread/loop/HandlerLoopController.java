@@ -1,10 +1,10 @@
 package com.eaglesakura.android.thread.loop;
 
+import android.os.Handler;
+
 import com.eaglesakura.android.thread.async.AsyncHandler;
 import com.eaglesakura.android.thread.ui.UIHandler;
 import com.eaglesakura.util.Timer;
-
-import android.os.Handler;
 
 /**
  * 指定のハンドラでループ処理を行うUtilクラス

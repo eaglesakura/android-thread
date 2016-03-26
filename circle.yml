@@ -1,37 +1,39 @@
 checkout:
   post:
     - chmod 755 ./gradlew
+    - chmod 755 ./script/circleci-invalidate-cache.sh
     - chmod 755 ./script/deploy.sh
     - chmod 755 ./script/circle-maven-commit.sh
+    - chmod 755 ./script/test.sh
 machine:
   timezone:
     Asia/Tokyo
   java:
     version: oraclejdk8
   environment:
-    ANDROID_HOME: /usr/local/android-sdk-linux
+    ANDROID_HOME: /home/ubuntu/android-sdk
     GRADLE_OPTS: -Xmx4G -Dorg.gradle.daemon=true
     JAVA_OPTS: -Dfile.encoding=UTF-8 -Xms1024m -Xmx4096m -XX:MaxPermSize=2048m
 dependencies:
+  cache_directories:
+    - "/home/ubuntu/android-sdk"
+    - "/home/ubuntu/build-cache"
   override:
-    - sh -c "$(curl -fsSL https://raw.githubusercontent.com/eaglesakura/build-dependencies/master/android-sdk.sh)"
+    - sh -c "$(curl -fsSL https://raw.githubusercontent.com/eaglesakura/build-dependencies/master/android-sdk-install-circle.sh)"
+    - ./script/circleci-invalidate-cache.sh
+    - ./gradlew dependencies
 test:
   override:
+#      - ./script/test.sh
     - echo "Skip test task"
 deployment:
   canary:
     branch: /^v[0-9]\..*$/
     commands:
-      - rm -rf "/home/ubuntu/.m2"
-      - rm -rf "/home/ubuntu/.ivy2"
-      - rm -rf "/home/ubuntu/.gradle"
       - git clone git@github.com:eaglesakura/maven.git
       - ./script/deploy.sh
       - ./script/circle-maven-commit.sh
   develop:
     branch: develop
     commands:
-      - rm -rf "/home/ubuntu/.m2"
-      - rm -rf "/home/ubuntu/.ivy2"
-      - rm -rf "/home/ubuntu/.gradle"
       - ./script/deploy.sh

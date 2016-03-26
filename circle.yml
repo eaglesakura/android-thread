@@ -20,7 +20,7 @@ dependencies:
     - "/home/ubuntu/build-cache"
   override:
     - sh -c "$(curl -fsSL https://raw.githubusercontent.com/eaglesakura/build-dependencies/master/android-sdk-install-circle.sh)"
-    - ./script/circleci-invalidate-cache.sh
+    - ./script/circle-invalidate-cache.sh
     - ./gradlew dependencies
 test:
   override:

@@ -55,6 +55,17 @@ public class UIHandler extends Handler {
     }
 
     /**
+     * 古いタスクをremoveしてから再度postする
+     * @param runnable
+     * @param delay
+     */
+    public static void rePostDelayedUI(Runnable runnable, long delay) {
+        UIHandler instance = getInstance();
+        instance.removeCallbacks(runnable);
+        instance.postDelayed(runnable, delay);
+    }
+
+    /**
      * UIスレッドにPOSTし、実行終了を待つ
      */
     public static void postWithWait(final Runnable runnable, long timeoutMs) {

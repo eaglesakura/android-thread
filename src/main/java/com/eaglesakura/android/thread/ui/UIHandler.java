@@ -2,6 +2,8 @@ package com.eaglesakura.android.thread.ui;
 
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.util.LogUtil;
+import com.eaglesakura.util.ThrowableRunnable;
+import com.eaglesakura.util.ThrowableRunner;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -56,13 +58,17 @@ public class UIHandler extends Handler {
 
     /**
      * 古いタスクをremoveしてから再度postする
-     * @param runnable
-     * @param delay
      */
     public static void rePostDelayedUI(Runnable runnable, long delay) {
         UIHandler instance = getInstance();
         instance.removeCallbacks(runnable);
         instance.postDelayed(runnable, delay);
+    }
+
+    public static <ReturnType, ErrorType extends Throwable> ReturnType await(ThrowableRunnable<ReturnType, ErrorType> action) throws ErrorType {
+        ThrowableRunner<ReturnType, ErrorType> runner = new ThrowableRunner<>(action);
+        postUIorRun(runner);
+        return runner.await();
     }
 
     /**

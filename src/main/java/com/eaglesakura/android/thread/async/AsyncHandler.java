@@ -1,5 +1,8 @@
 package com.eaglesakura.android.thread.async;
 
+import com.eaglesakura.util.ThrowableRunnable;
+import com.eaglesakura.util.ThrowableRunner;
+
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -28,6 +31,12 @@ public class AsyncHandler extends Handler {
         } catch (Exception e) {
 
         }
+    }
+
+    public <ReturnType, ErrorType extends Throwable> ReturnType await(ThrowableRunnable<ReturnType, ErrorType> action) throws ErrorType {
+        ThrowableRunner<ReturnType, ErrorType> runner = new ThrowableRunner<>(action);
+        post(runner);
+        return runner.await();
     }
 
     /**

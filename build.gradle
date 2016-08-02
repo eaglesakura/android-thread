@@ -47,6 +47,7 @@ android {
     lintOptions {
         disable "NewApi"
         disable "GradleDynamicVersion"
+        abortOnError false
     }
 }
 

@@ -16,6 +16,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.2.+'
+        classpath 'me.tatarka:gradle-retrolambda:3.2.5' // support Lambda
     }
 }
 
@@ -25,34 +26,27 @@ repositories {
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'me.tatarka.retrolambda' /* Android Lambda Support */
 
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.1"
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_7
     }
 
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 24
+        // Device Test
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"    // JUnit4
     }
 
     lintOptions {
-        disable "DuplicateIds"
         disable "NewApi"
-        disable "InvalidPackage"
-        disable "ProtectedPermissions"
-        disable "MissingTranslation"
-    }
-
-    // ignore include
-    packagingOptions {
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE'
+        disable "GradleDynamicVersion"
     }
 }
 
@@ -76,6 +70,22 @@ dependencies {
 
         androidTestCompile 'com.eaglesakura:android-devicetest-support:1.+'
         testCompile 'com.eaglesakura:android-unittest-support:1.+'
+    }
+}
+
+/**
+ * UnitTest & retro lambda
+ */
+tasks.withType(Test) {
+    project.tasks
+            .findAll {
+        task -> (task.name ==~ /compile.*?TestJava.*?/)
+    }
+    .each { task ->
+        task.doFirst {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
     }
 }
 

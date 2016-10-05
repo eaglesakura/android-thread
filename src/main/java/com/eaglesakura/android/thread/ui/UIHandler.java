@@ -108,7 +108,7 @@ public class UIHandler extends Handler {
      * UIスレッドにPOSTし、実行終了を待つ
      * タイムアウトはキャンセルコールバックを通じて行う
      */
-    public static void postWithWait(final Runnable runnable, CancelCallback callback) {
+    public static boolean postWithWait(final Runnable runnable, CancelCallback callback) {
         if (AndroidThreadUtil.isUIThread()) {
             runnable.run();
         } else {
@@ -128,9 +128,10 @@ public class UIHandler extends Handler {
                 // キャンセルされたのでコールバックを廃棄する
                 if (CallbackUtils.isCanceled(callback)) {
                     getInstance().removeCallbacks(task);
-                    return;
+                    return false;
                 }
             }
         }
+        return true;
     }
 }

@@ -1,6 +1,9 @@
 package com.eaglesakura.android.thread.ui;
 
 import com.eaglesakura.android.util.AndroidThreadUtil;
+import com.eaglesakura.lambda.CallbackUtils;
+import com.eaglesakura.lambda.CancelCallback;
+import com.eaglesakura.thread.Holder;
 import com.eaglesakura.util.LogUtil;
 import com.eaglesakura.util.ThrowableRunnable;
 import com.eaglesakura.util.ThrowableRunner;
@@ -74,6 +77,7 @@ public class UIHandler extends Handler {
     /**
      * UIスレッドにPOSTし、実行終了を待つ
      */
+    @Deprecated
     public static void postWithWait(final Runnable runnable, long timeoutMs) {
         if (AndroidThreadUtil.isUIThread()) {
             runnable.run();
@@ -100,4 +104,34 @@ public class UIHandler extends Handler {
         }
     }
 
+    /**
+     * UIスレッドにPOSTし、実行終了を待つ
+     * タイムアウトはキャンセルコールバックを通じて行う
+     */
+    public static boolean postWithWait(final Runnable runnable, CancelCallback callback) {
+        if (AndroidThreadUtil.isUIThread()) {
+            runnable.run();
+        } else {
+            Holder<Boolean> finished = new Holder<>();
+            Runnable task = () -> {
+                try {
+                    runnable.run();
+                } finally {
+                    finished.set(Boolean.TRUE);
+                }
+            };
+
+            UIHandler.postUI(task);
+
+            while (!Boolean.TRUE.equals(finished.get())) {
+
+                // キャンセルされたのでコールバックを廃棄する
+                if (CallbackUtils.isCanceled(callback)) {
+                    getInstance().removeCallbacks(task);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }
